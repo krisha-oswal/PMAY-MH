@@ -1,0 +1,102 @@
+/* General Page Styling */
+body {
+    font-family: 'Georgia', serif;
+    margin: 0;
+    padding: 0;
+    background-color: #eaeaea;
+}
+
+/* Header Styling */
+header {
+    background-color: #003366;
+    color: #f0f0f0;
+    padding: 20px 0;
+    text-align: center;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+header h1 {
+    font-size: 2em;
+    margin: 0;
+    color: #f0f0f0;
+    font-weight: bold;
+}
+
+header p {
+    font-size: 1.2em;
+    margin: 5px 0 0;
+    color: #d4d4d4;
+}
+
+/* Main Content Styling */
+main {
+    padding: 30px;
+    text-align: center;
+}
+
+h2 {
+    font-size: 1.8em;
+    color: #003366;
+}
+
+.user-roles {
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    margin-top: 30px;
+}
+
+.role {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    padding: 20px;
+    text-align: center;
+    width: 250px;
+    margin: 10px;
+}
+
+.role h3 {
+    color: #003366;
+    font-size: 1.5em;
+    margin-bottom: 10px;
+}
+
+.role p {
+    font-size: 1em;
+    color: #333333;
+}
+
+/* Button Styling */
+a {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 10px 20px;
+    background-color: #00529b;
+    color: #ffffff;
+    text-decoration: none;
+    font-weight: bold;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+}
+
+a:hover {
+    background-color: #003366;
+}
+
+/* Footer Styling */
+footer {
+    text-align: center;
+    padding: 20px;
+    background-color: #003366;
+    color: #ffffff;
+    position: relative;
+    bottom: 0;
+    width: 100%;
+    font-size: 0.9em;
+}
+
+footer p {
+    margin: 0;
+    color: #d4d4d4;
+}
