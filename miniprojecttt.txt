@@ -1,0 +1,470 @@
+DROP DATABASE IF EXISTS Miniproject;
+
+CREATE DATABASE Miniproject;
+
+USE Miniproject;
+
+CREATE TABLE User(
+	UserID BIGINT PRIMARY KEY AUTO_INCREMENT,
+	UserType VARCHAR(255) NOT NULL,
+	CONSTRAINT CHK_User_UserType CHECK (UserType IN ('Applicant', 'Sanctioner', 'Administrator'))
+);
+
+CREATE TABLE Applicant (
+	ApplicantID BIGINT PRIMARY KEY AUTO_INCREMENT,
+	UserID BIGINT NOT NULL,
+	Name VARCHAR(255) NOT NULL,
+	PhoneNumber BIGINT NOT NULL,
+	EmailID Varchar(255) NOT NULL,
+	Gender Varchar(1) NOT NULL,
+	CONSTRAINT FK_Applicant_UserID FOREIGN KEY(UserID) REFERENCES User(UserID)
+	ON DELETE CASCADE,
+	CONSTRAINT UQ_Applicant_PhoneNumber UNIQUE (PhoneNumber),
+	CONSTRAINT UQ_Applicant_EmailID UNIQUE (EmailID),
+	CONSTRAINT CHK_Applicant_PhoneNumber CHECK (PhoneNumber BETWEEN 1000000000 AND 9999999999),
+	CONSTRAINT CHK_Applicant_Gender Check (Gender IN('M','F'))
+);
+
+CREATE TABLE ProjectManager (
+    ProjectManagerID INT PRIMARY KEY, 
+    ManagerName VARCHAR(255) NOT NULL,
+    ManagerContact VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE Financial (
+    ApplicantID BIGINT PRIMARY KEY,
+    Income INT NOT NULL,
+    IncomeCategory VARCHAR(255),
+    CONSTRAINT FK_Financial_ApplicantID FOREIGN KEY (ApplicantID) REFERENCES Applicant(ApplicantID)
+    ON DELETE CASCADE,
+    CONSTRAINT CHK_Financial_IncomeCategory CHECK ( IncomeCategory IN ('EWS', 'LIG', 'MIG I', 'MIG II'))
+);
+
+CREATE TABLE Application (
+    ApplicationID BIGINT PRIMARY KEY AUTO_INCREMENT,
+    ApplicantID BIGINT NOT NULL,
+    Type VARCHAR(255) NOT NULL,
+    CONSTRAINT FK_Application_ApplicantID FOREIGN KEY (ApplicantID) REFERENCES Applicant(ApplicantID)
+    ON DELETE CASCADE,
+    CONSTRAINT CHK_Application_Type CHECK (Type IN ('urban', 'local'))
+) AUTO_INCREMENT = 27000000;
+
+CREATE TABLE Project (
+    ProjectID BIGINT PRIMARY KEY,
+    ProjectName VARCHAR(255) NOT NULL,
+    TotalUnits INT NOT NULL,
+    ProjectManagerID INT NULL,
+    CONSTRAINT FK_Project_ManagerID FOREIGN KEY (ProjectManagerID) REFERENCES ProjectManager(ProjectManagerID) ON DELETE SET NULL
+);
+
+CREATE TABLE SanctionBody (
+    SanctionBodyID INT PRIMARY KEY,
+    ApplicationID BIGINT NOT NULL,
+    LocationOfSanctionBody VARCHAR(255) NOT NULL,
+    DateOfSanctioning DATE NOT NULL,
+    CONSTRAINT FK_SanctionBody_ApplicationID FOREIGN KEY (ApplicationID) REFERENCES Application(ApplicationID)
+    ON DELETE CASCADE
+);
+
+CREATE TABLE DistrictOffice(
+    DistrictOfficeID INT PRIMARY KEY,
+    DistrictOfficeName VARCHAR(255),
+    DistrictOfficeNumber INT,
+    CONSTRAINT UQ_DistrictOffice_DistrictName UNIQUE (DistrictOfficeName),
+    CONSTRAINT UQ_DistrictOffice_DistrictNumber UNIQUE (DistrictOfficeNumber)
+);
+
+CREATE TABLE DistrictProject (
+    DistrictID INT,
+    ProjectID BIGINT,
+    CONSTRAINT PK_DistrictProject PRIMARY KEY (DistrictID, ProjectID),
+    CONSTRAINT FK_DistrictProject_DistrictID FOREIGN KEY (DistrictID) REFERENCES DistrictOffice(DistrictOfficeID),
+    CONSTRAINT FK_DistrictProject_ProjectID FOREIGN KEY (ProjectID) REFERENCES Project(ProjectID)
+);
+
+
+CREATE TABLE ProjectLog (
+    LogID BIGINT AUTO_INCREMENT PRIMARY KEY,
+    ProjectID BIGINT,
+    ActionPerformed ENUM('INSERT', 'UPDATE', 'DELETE'),
+    OldProjectName VARCHAR(255),
+    NewProjectName VARCHAR(255),
+    OldTotalUnits INT,
+    NewTotalUnits INT,
+    ActionTimestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (ProjectID) REFERENCES Project(ProjectID)
+);
+
+
+CREATE TABLE Address(
+    ApplicantID BIGINT PRIMARY KEY,
+	PinCode INT NOT NULL,
+	StreetNumber VARCHAR(255) NOT NULL,
+	StreetName VARCHAR(255) NOT NULL,
+	LandMark VARCHAR(255),
+	City VARCHAR(255) NOT NULL,
+	District VARCHAR(255) NOT NULL,
+	CONSTRAINT FK_Address_ApplicantID FOREIGN KEY (ApplicantID) REFERENCES Applicant(ApplicantID),
+	CONSTRAINT CHK_Address_PINCODE CHECK (PinCode BETWEEN 99999 AND 999999)
+);
+
+CREATE TABLE ApplicantPWD(
+	PhoneNumber BIGINT PRIMARY KEY,
+	Password VARCHAR(255) NOT NULL,
+	UserID BIGINT NOT NULL,
+	CONSTRAINT FK_ApplicantPWD_UserID FOREIGN KEY (UserId) REFERENCES User(UserID),
+	CONSTRAINT CHK_ApplicantPWD_PhoneNumber CHECK (PhoneNumber between 1000000000 AND 999999999)
+);
+
+CREATE TABLE TehsilPWD(
+	TehsilID BIGINT PRIMARY KEY AUTO_INCREMENT,
+	Password VARCHAR(255) NOT NULL,
+	UserID BIGINT NOT NULL,
+	CONSTRAINT FK_TehsilPWD_UserID FOREIGN KEY (UserId) REFERENCES User(UserID)
+)AUTO_INCREMENT = 500000;
+
+
+CREATE TABLE SanctioniserPWD(
+	SanctionerID BIGINT PRIMARY KEY AUTO_INCREMENT,
+	Password VARCHAR(255) NOT NULL,
+	UserID BIGINT NOT NULL,
+	CONSTRAINT FK_SanctionerPWD_UserID FOREIGN KEY (UserId) REFERENCES User(UserID)
+)AUTO_INCREMENT = 700000;
+
+CREATE TABLE AdminPWD(
+	AdminID BIGINT PRIMARY KEY AUTO_INCREMENT,
+	Password VARCHAR(255) NOT NULL,
+	UserID BIGINT NOT NULL,
+	CONSTRAINT FK_AdminPWD_UserID FOREIGN KEY (UserId) REFERENCES User(UserID)
+)AUTO_INCREMENT = 9000000;
+
+CREATE TABLE DocumentsRequired(
+	ApplicantID BIGINT PRIMARY KEY,
+	IdentityProof VARCHAR(255),
+	AddressProof VARCHAR(255),
+	IncomeProof VARCHAR(255),
+	PropertyDocuments VARCHAR(255),
+	Affidavit VARCHAR(255),
+	Valid BOOLEAN,
+	CONSTRAINT FK_DocumentsRequired_ApplicantID FOREIGN KEY (ApplicantID) REFERENCES Applicant(ApplicantID)
+	ON DELETE CASCADE,
+	CONSTRAINT CHK_DocumentsRequired_IdentityProof CHECK (IdentityProof IN ('valid', 'invalid')),
+	CONSTRAINT CHK_DocumentsRequired_AddressProof CHECK (AddressProof IN ('valid', 'invalid')),
+	CONSTRAINT CHK_DocumentsRequired_IncomeProof CHECK (IncomeProof IN ('valid', 'invalid')),
+	CONSTRAINT CHK_DocumentsRequired_PropertyDocuments CHECK (PropertyDocuments IN ('valid', 'invalid')),
+	CONSTRAINT CHK_DocumentsRequired_Affidavit CHECK (Affidavit IN ('valid', 'invalid'))
+);
+
+CREATE TABLE IdentityProof(
+	ApplicantID BIGINT PRIMARY KEY,
+	VoterID VARCHAR(255) DEFAULT NULL,
+	Passport VARCHAR(255) DEFAULT NULL,
+	DrivingLicense VARCHAR(255) DEFAULT NULL,
+	Valid BOOLEAN,
+	CONSTRAINT FK_IdentityProof_ApplicantID FOREIGN KEY (ApplicantID) REFERENCES Applicant(ApplicantID)
+	ON DELETE CASCADE,
+	CONSTRAINT CHK_IdentityProof_VoterID CHECK (VoterID IN ('valid', 'invalid')),
+	CONSTRAINT CHK_IdentityProof_Passport CHECK (Passport IN ('valid', 'invalid')),
+	CONSTRAINT CHK_IdentityProof_DrivingLicense CHECK (DrivingLicense IN ('valid', 'invalid'))
+);
+
+CREATE TABLE AddressProof(
+	ApplicantID BIGINT PRIMARY KEY,
+	UtilityBill VARCHAR(255) DEFAULT NULL,
+	RentAgreement VARCHAR(255) DEFAULT NULL,
+	RelevantDocumentIssued VARCHAR(255) DEFAULT NULL,
+	Valid BOOLEAN,
+	CONSTRAINT FK_AddressProof_ApplicantID FOREIGN KEY (ApplicantID) REFERENCES Applicant(ApplicantID)
+	ON DELETE CASCADE,
+	CONSTRAINT CHK_AddressProof_UtilityBill CHECK (UtilityBill IN ('valid', 'invalid')),
+	CONSTRAINT CHK_AddressProof_RentAgreement CHECK (RentAgreement IN ('valid', 'invalid')),
+	CONSTRAINT CHK_AddressProof_RelevantDocumentIssued CHECK (RelevantDocumentIssued IN ('valid', 'invalid'))
+);
+
+CREATE TABLE IncomeProof(
+	ApplicantID BIGINT PRIMARY KEY,
+	SalarySlips VARCHAR(255) DEFAULT NULL,
+	IncomeTaxReturns VARCHAR(255) DEFAULT NULL,
+	BankStatements VARCHAR(255) DEFAULT NULL,
+	Valid BOOLEAN,
+	CONSTRAINT FK_IncomeProof_ApplicantID FOREIGN KEY (ApplicantID) REFERENCES Applicant(ApplicantID)
+	ON DELETE CASCADE,
+	CONSTRAINT CHK_IncomeProof_SalarySlips CHECK (SalarySlips IN ('valid', 'invalid')),
+	CONSTRAINT CHK_IncomeProof_IncomeTaxReturns CHECK (IncomeTaxReturns IN ('valid', 'invalid')),
+	CONSTRAINT CHK_IncomeProof_BankStatements CHECK (BankStatements IN ('valid', 'invalid'))
+	);
+
+CREATE TABLE PropertyDocuments(
+	ApplicantID BIGINT PRIMARY KEY,
+	SaleDeed VARCHAR(255) DEFAULT NULL,
+	PropertyRegistration VARCHAR(255) DEFAULT NULL,
+	OtherProofOfPurchase VARCHAR(255) DEFAULT NULL,
+	Valid BOOLEAN,
+	CONSTRAINT FK_PropertyDocuments_ApplicantID FOREIGN KEY (ApplicantID) REFERENCES Applicant(ApplicantID)
+	ON DELETE CASCADE,
+	CONSTRAINT CHK_PropertyDocuments_SaleDeed CHECK (SaleDeed IN ('valid', 'invalid')),
+	CONSTRAINT CHK_PropertyDocuments_PropertyRegistration CHECK (PropertyRegistration IN ('valid', 'invalid')),
+	CONSTRAINT CHK_PropertyDocuments_OtherProofOfPurchase CHECK (OtherProofOfPurchase IN ('valid', 'invalid'))
+	);
+
+
+
+Delimiter //
+
+CREATE TRIGGER ProjectInsertLog
+AFTER INSERT ON Project
+FOR EACH ROW
+BEGIN
+    INSERT INTO ProjectLog (ProjectID, ActionPerformed, NewProjectName, NewTotalUnits)
+    VALUES (NEW.ProjectID, 'INSERT', NEW.ProjectName, NEW.TotalUnits);
+END //
+
+CREATE TRIGGER ProjectUpdateLog
+AFTER UPDATE ON Project
+FOR EACH ROW
+BEGIN
+    INSERT INTO ProjectLog (ProjectID, ActionPerformed, OldProjectName, NewProjectName, OldTotalUnits, NewTotalUnits)
+    VALUES (NEW.ProjectID, 'UPDATE', OLD.ProjectName, NEW.ProjectName, OLD.TotalUnits, NEW.TotalUnits);
+END//
+
+CREATE TRIGGER ProjectDeleteLog
+AFTER DELETE ON Project
+FOR EACH ROW
+BEGIN
+    INSERT INTO ProjectLog (ProjectID, ActionPerformed, OldProjectName, OldTotalUnits)
+    VALUES (OLD.ProjectID, 'DELETE', OLD.ProjectName, OLD.TotalUnits);
+END//
+
+CREATE TRIGGER UpdateIdentityProofValidBeforeInsert
+BEFORE INSERT ON IdentityProof
+FOR EACH ROW
+BEGIN
+    IF NEW.VoterID = TRUE
+        OR NEW.Passport = TRUE
+        OR NEW.DrivingLicense = TRUE THEN
+        SET NEW.Valid = TRUE;
+    ELSE
+        SET NEW.Valid = FALSE;
+    END IF;
+    
+    UPDATE DocumentsRequired
+    SET IdentityProof = NEW.Valid
+    WHERE ApplicantID = NEW.ApplicantID;
+
+END //
+
+CREATE TRIGGER UpdateIdentityProofValidBeforeUpdate
+BEFORE UPDATE ON IdentityProof
+FOR EACH ROW
+BEGIN
+    IF NEW.VoterID = 'valid'
+        OR NEW.Passport = 'valid'
+        OR NEW.DrivingLicense = 'valid' THEN
+        SET NEW.Valid = TRUE;
+    ELSE
+        SET NEW.Valid = FALSE;
+    END IF;
+    
+    UPDATE DocumentsRequired
+    SET IdentityProof = NEW.Valid
+    WHERE ApplicantID = NEW.ApplicantID;
+    
+END //
+
+
+CREATE TRIGGER UpdateAddressProofValidBeforeInsert
+BEFORE INSERT ON AddressProof
+FOR EACH ROW
+BEGIN
+    IF NEW.UtilityBill = TRUE
+        OR NEW.RentAgreement = TRUE
+        OR NEW.RelevantDocumentIssued = TRUE THEN
+        SET NEW.Valid = TRUE;
+    ELSE
+        SET NEW.Valid = FALSE;
+    END IF;
+    
+    UPDATE DocumentsRequired
+    SET AddressProof = NEW.Valid
+    WHERE ApplicantID = NEW.ApplicantID;
+    
+END //
+
+CREATE TRIGGER UpdateAddressProofValidBeforeUpdate
+BEFORE UPDATE ON AddressProof
+FOR EACH ROW
+BEGIN
+    IF NEW.UtilityBill = TRUE
+        OR NEW.RentAgreement = TRUE
+        OR NEW.RelevantDocumentIssued = TRUE THEN
+        SET NEW.Valid = TRUE;
+    ELSE
+        SET NEW.Valid = FALSE;
+    END IF;
+
+    UPDATE DocumentsRequired
+    SET AddressProof = NEW.Valid
+    WHERE ApplicantID = NEW.ApplicantID;
+    
+END //
+
+CREATE TRIGGER UpdateIncomeProofValidBeforeInsert
+BEFORE INSERT ON IncomeProof
+FOR EACH ROW
+BEGIN
+    IF NEW.SalarySlips = TRUE
+        OR NEW.IncomeTaxReturns = TRUE
+        OR NEW.BankStatements = TRUE THEN
+        SET NEW.Valid = TRUE;
+    ELSE
+        SET NEW.Valid = FALSE;
+    END IF;
+
+    UPDATE DocumentsRequired
+    SET IncomeProof = NEW.Valid
+    WHERE ApplicantID = NEW.ApplicantID;
+    
+END //
+
+CREATE TRIGGER UpdateIncomeProoffValidBeforeUpdate
+BEFORE UPDATE ON IncomeProof
+FOR EACH ROW
+BEGIN
+    IF NEW.SalarySlips = TRUE
+        OR NEW.IncomeTaxReturns = TRUE
+        OR NEW.BankStatements = TRUE THEN
+        SET NEW.Valid = TRUE;
+    ELSE
+        SET NEW.Valid = FALSE;
+    END IF;
+
+    UPDATE DocumentsRequired
+    SET IncomeProof = NEW.Valid
+    WHERE ApplicantID = NEW.ApplicantID;
+    
+END //
+
+CREATE TRIGGER UpdatePropertyDocumentsValidBeforeInsert
+BEFORE INSERT ON PropertyDocuments
+FOR EACH ROW
+BEGIN
+    IF NEW.SaleDeed = TRUE
+        OR NEW.PropertyRegistration = TRUE
+        OR NEW.OtherProofOfPurchase = TRUE THEN
+        SET NEW.Valid = TRUE;
+    ELSE
+        SET NEW.Valid = FALSE;
+    END IF;
+
+    UPDATE DocumentsRequired
+    SET PropertyDocuments = NEW.Valid
+    WHERE ApplicantID = NEW.ApplicantID;
+
+END //
+
+CREATE TRIGGER UpdatePropertyDocumentsValidBeforeUpdate
+BEFORE UPDATE ON PropertyDocuments
+FOR EACH ROW
+BEGIN
+    IF NEW.SaleDeed = TRUE
+        OR NEW.PropertyRegistration = TRUE
+        OR NEW.OtherProofOfPurchase = TRUE THEN
+        SET NEW.Valid = TRUE;
+    ELSE
+        SET NEW.Valid = FALSE;
+    END IF;
+
+    UPDATE DocumentsRequired
+    SET PropertyDocuments = NEW.Valid
+    WHERE ApplicantID = NEW.ApplicantID;
+
+END //
+
+CREATE PROCEDURE GetAllApplicationDetailsForTehsil()
+BEGIN
+    SELECT
+        a.ApplicationID,
+        apt.Name,
+        apt.Gender,
+        f.IncomeCategory,
+        apt.City,
+        a.DateOfApplication,
+        dr.Valid
+    FROM
+        Application a
+        INNER JOIN Applicant apt on a.ApplicantID = apt.ApplicantID
+        INNER JOIN Financial f ON apt.ApplicantID = f.ApplicantID
+        INNER JOIN DocumentsRequired dr ON f.ApplicantID = dr.ApplicantID;
+END//
+
+CREATE PROCEDURE ApproveByTehsil(IN v_ApplicationID BIGINT)
+BEGIN
+    UPDATE Application
+    SET ApplicationApprovedByTehsil = TRUE
+    WHERE ApplicationID = v_ApplicationID;
+END//
+
+CREATE PROCEDURE GetAllApplicationDetailsForSanctioner()
+BEGIN
+    SELECT
+        a.ApplicationID,
+        apt.Name,
+        apt.Gender,
+        f.IncomeCategory,
+        apt.City,
+        apt.District,
+        a.DateOfApplication,
+        dr.Valid
+    FROM
+        Application a
+        INNER JOIN Applicant apt on a.ApplicantID = apt.ApplicantID
+        INNER JOIN Financial f ON apt.ApplicantID = f.ApplicantID
+        INNER JOIN DocumentsRequired dr ON f.ApplicantID = dr.ApplicantID
+        WHERE a.ApplicationApprovedByTehsil = TRUE;
+END//
+
+CREATE PROCEDURE ApprovedBySanctioner(IN v_ApplicationID BIGINT)
+BEGIN
+    UPDATE Application
+    SET ApplicationApprovedBySanctioner = TRUE
+    WHERE ApplicationID = v_ApplicationID;
+END//
+
+CREATE PROCEDURE IsApproved(IN v_ApplicationID BIGINT)
+BEGIN
+    DECLARE ApprovedBySanctioner BOOLEAN;
+    DECLARE ApprovedByTehsil BOOLEAN;
+    SELECT a.ApplicationApprovedBySanctioner, a.ApplicationApprovedByTehsil
+    INTO ApprovedBySanctioner, ApprovedByTehsil
+    FROM Application a
+    WHERE a.ApplicationID = v_ApplicationID;
+
+    IF ApprovedBySanctioner = TRUE THEN
+        SELECT "Approved By Sanctioner" AS Message;
+    ELSEIF ApprovedByTehsil = TRUE THEN
+        SELECT "Approved By Tehsil" AS Message;
+    ELSE
+        SELECT "Not Approved Yet" AS Message;
+    END IF;
+END//
+
+CREATE PROCEDURE GetAllApplicationDetailsApproved(IN v_ApplicationID BIGINT)
+BEGIN
+    SELECT
+        a.ApplicationID,
+        apt.Name,
+        apt.Gender,
+        f.IncomeCategory,
+        apt.City,
+        apt.District,
+        a.DateOfApplication,
+        dr.Valid
+    FROM
+        Application a
+        INNER JOIN Applicant apt on a.ApplicantID = apt.ApplicantID
+        INNER JOIN Financial f ON apt.ApplicantID = f.ApplicantID
+        INNER JOIN DocumentsRequired dr ON f.ApplicantID = dr.ApplicantID
+        WHERE a.ApplicationApprovedByTehsil = TRUE AND a.ApplicationApprovedBySanctioner = TRUE;
+END//
+
+Delimiter ;
